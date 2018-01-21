@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>NoLightsBiking</title>
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+
+	<script src="js/lib/tracking-min.js"></script>
+	<script src="js/lib/dat.gui.min.js"></script>
+	<script src="js/color_camera_gui.js"></script>
+
+	<!--Adding this due to Chromium problem to recognize style sheet styles-->
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			font-family: Helvetica, Arial, sans-serif;
+		}
+
+		video, canvas {
+			margin-left: 0;
+			margin-top: 0;
+			position: absolute;
+		}
+
+		.info {
+			padding-top:500px;
+		}
+
+		.dg.ac {
+			display:none;
+		}
+	</style>
+
+</head>
+<body>
+
+	<div class="frame">
+		<div class="container">
+			<video id="video" width="600" height="450" preload autoplay loop muted controls></video>
+			<canvas id="canvas" width="600" height="450"></canvas>
+		</div>
+	</div>
+
+	<div class="info">
+		<div><b>Timer: </b><span id="seconds"></span>:<span id="minutes"></span></div>
+		<div><b>Total time for RED light: </b><span id="red_seconds"></span>:<span id="red_minutes"></span></div>
+		<div><b>Total time for YELLOW light: </b><span id="yellow_seconds"></span>:<span id="yellow_minutes"></span></div>
+		<div><b>Total time for GREEN light: </b><span id="green_seconds"></span>:<span id="green_minutes"></span></div>
+	</div>
+
+	<script>
+
+		var sec = 0;
+		var old_color = null;
+
+		function pad(val) {
+			return val > 9 ? val : "0" + val;
+		}
+
+		var timer = setInterval(function () {
+			document.getElementById("seconds").innerHTML = pad(++sec % 60);
+			document.getElementById("minutes").innerHTML = pad(parseInt(sec / 60, 10));
+		}, 1000);
+
+		window.onload = function() {
+			var video = document.getElementById('video');
+			var canvas = document.getElementById('canvas');
+			var context = canvas.getContext('2d');
+
+
+			/*tracking.ColorTracker.registerColor("red", function(r, g, b) {
+				if ((r-g) >= 50 && (r-b)>=10) {
+					return true;
+				}
+				return false;
+			});*/
+
+
+			/*tracking.ColorTracker.registerColor("green", function(r, g, b) {
+				if (r < 80 && g > 160 && b < 80) {
+					return true;
+				}
+				return false;
+			});*/
+
+			var tracker = new tracking.ColorTracker();
+			tracking.ColorTracker.knownColors_ = {};
+			tracking.ColorTracker.registerColor("red", function(r, g, b) {
+				if (r > 160 && g < 80 && b < 80) {
+					return true;
+				}
+				return false;
+			});
+
+			tracking.ColorTracker.registerColor('green', function(r, g, b) {
+				if ((g-r) >= 50 && (g-b)>=50) 
+				{
+					return true;
+				}
+				return false;
+			});
+
+			tracking.ColorTracker.registerColor('yellow', function(r, g, b) {
+				if ((r - b) >= 50 && (g - b) >= 50) {
+					return true;
+				}
+				return false;
+			});
+
+			tracker.setMinDimension(1);
+			tracker.setMinGroupSize(1);
+
+			tracking.track('#video', tracker, { camera: true });
+
+			tracker.on('track', function(event) {
+				context.clearRect(0, 0, canvas.width, canvas.height);
+
+				event.data.forEach(function(rect) {
+
+					context.strokeStyle = rect.color;
+					context.strokeRect(rect.x, rect.y, rect.width, rect.height);
+					context.font = '11px Helvetica';
+					context.fillStyle = "#fff";
+					context.fillText('x: ' + rect.x + 'px', rect.x + rect.width + 5, rect.y + 11);
+					context.fillText('y: ' + rect.y + 'px', rect.x + rect.width + 5, rect.y + 22);
+
+					if(rect.color !== old_color){
+						if (rect.color == "red") {
+							document.getElementById("red_seconds").innerHTML = document.getElementById("seconds").innerHTML;
+							document.getElementById("red_minutes").innerHTML = document.getElementById("minutes").innerHTML;
+						} else if (rect.color == "yellow") {
+							document.getElementById("yellow_seconds").innerHTML = document.getElementById("seconds").innerHTML;
+							document.getElementById("yellow_minutes").innerHTML = document.getElementById("minutes").innerHTML;
+						} else if (rect.color == "green") {
+							document.getElementById("green_seconds").innerHTML = document.getElementById("seconds").innerHTML;
+							document.getElementById("green_minutes").innerHTML = document.getElementById("minutes").innerHTML;
+						}
+						sec = 0;
+						old_color = rect.color;
+					}
+				});
+			});
+
+			initGUIControllers(tracker);
+		};
+	</script>
+
+</body>
+</html>

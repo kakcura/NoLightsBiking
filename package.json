@@ -1,0 +1,27 @@
+{
+	"name": "NoLightsBiking",
+	"version": "1.0.0",
+	"description": "Detect Traffic Light Timings",
+	"main": "server.js",
+	"dependencies": {
+		"httpserver": "0.3.0"
+	},
+	"devDependencies": {},
+	"scripts": {
+		"start": "node server.js",
+		"test": "node server.js"
+	},
+	"repository": {
+		"type": "",
+		"url": ""
+	},
+	"keywords": [
+		"node",
+		"js",
+		"tracking"
+	],
+	"author": "Korhan Akcura",
+	"bugs": {
+		"url": "https://github.com/kakcura/NoLightsBiking"
+	}
+}
